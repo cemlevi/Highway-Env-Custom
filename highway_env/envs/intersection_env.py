@@ -259,7 +259,7 @@ class IntersectionEnv(AbstractEnv):
         )
         self.road = road
 
-    def _make_vehicles(self, n_vehicles: int = 10) -> None:
+    def _make_vehicles(self, n_vehicles: int = 0) -> None:
         """
         Populate a road with several vehicles on the highway and on the merging lane
 
@@ -273,6 +273,7 @@ class IntersectionEnv(AbstractEnv):
 
         # Random vehicles
         simulation_steps = 3
+        
         for t in range(n_vehicles - 1):
             self._spawn_vehicle(np.linspace(0, 80, n_vehicles)[t])
         for _ in range(simulation_steps):
@@ -292,14 +293,14 @@ class IntersectionEnv(AbstractEnv):
             position_deviation=0.1,
             speed_deviation=0,
         )
-
+        
         # Controlled vehicles
         self.controlled_vehicles = []
         for ego_id in range(0, self.config["controlled_vehicles"]):
             ego_lane = self.road.network.get_lane(
                 (f"o{ego_id % 4}", f"ir{ego_id % 4}", 0)
             )
-            destination = self.config["destination"] or "o" + str(
+            destination = (f"o{(ego_id+1)%4}") or "o" + str(
                 self.np_random.integers(1, 4)
             )
             ego_vehicle = self.action_type.vehicle_class(
@@ -321,13 +322,14 @@ class IntersectionEnv(AbstractEnv):
 
             self.road.vehicles.append(ego_vehicle)
             self.controlled_vehicles.append(ego_vehicle)
+            
             for v in self.road.vehicles:  # Prevent early collisions
                 if (
                     v is not ego_vehicle
                     and np.linalg.norm(v.position - ego_vehicle.position) < 20
                 ):
                     self.road.vehicles.remove(v)
-
+            
     def _spawn_vehicle(
         self,
         longitudinal: float = 0,
