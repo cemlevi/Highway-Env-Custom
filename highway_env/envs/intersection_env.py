@@ -60,12 +60,11 @@ class IntersectionEnv(AbstractEnv):
 
     def _reward(self, action: int) -> float:
         """Aggregated reward, for cooperative agents."""
-        '''
         return sum(
             self._agent_reward(action, vehicle) for vehicle in self.controlled_vehicles
         ) / len(self.controlled_vehicles)
         '''
-        return [self._agent_reward(action, vehicle) for vehicle in self.controlled_vehicles]
+        return [self._agent_reward(action, vehicle) for vehicle in self.controlled_vehicles]'''
 
     def _rewards(self, action: int) -> dict[str, float]:
         """Multi-objective rewards, for cooperative agents."""
@@ -107,17 +106,18 @@ class IntersectionEnv(AbstractEnv):
         }
 
     def _is_terminated(self) -> bool:
-        '''
+        
         return (
             any(vehicle.crashed for vehicle in self.controlled_vehicles)
             or all(self.has_arrived(vehicle) for vehicle in self.controlled_vehicles)
-            or (self.config["offroad_terminal"] and not self.vehicle.on_road)
-        )'''
-        return [vehicle.crashed or self.has_arrived(vehicle) for vehicle in self.controlled_vehicles]
+            or any((self.config["offroad_terminal"] and not vehicle.on_road) for vehicle in self.controlled_vehicles)
+        )
+        '''
+        return [(vehicle.crashed or self.has_arrived(vehicle) or (self.config["offroad_terminal"] and not vehicle.on_road)) for vehicle in self.controlled_vehicles]'''
 
     def _agent_is_terminal(self, vehicle: Vehicle) -> bool:
         """The episode is over when a collision occurs or when the access ramp has been passed."""
-        return vehicle.crashed or self.has_arrived(vehicle)
+        return vehicle.crashed or self.has_arrived(vehicle) or (self.config["offroad_terminal"] and not vehicle.on_road)
 
     def _is_truncated(self) -> bool:
         """The episode is truncated if the time limit is reached."""
@@ -130,6 +130,12 @@ class IntersectionEnv(AbstractEnv):
         )
         info["agents_terminated"] = tuple(
             self._agent_is_terminal(vehicle) for vehicle in self.controlled_vehicles
+        )
+        info["agents_terminated_bad"] = tuple(
+           vehicle.crashed or (self.config["offroad_terminal"] and not vehicle.on_road) for vehicle in self.controlled_vehicles
+        )
+        info["agents_terminated_good"] = tuple(
+            self.has_arrived(vehicle) for vehicle in self.controlled_vehicles
         )
         return info
 
