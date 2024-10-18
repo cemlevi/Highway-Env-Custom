@@ -259,7 +259,7 @@ class IntersectionEnv(AbstractEnv):
         )
         self.road = road
 
-    def _make_vehicles(self, n_vehicles: int = 0) -> None:
+    def _make_vehicles(self, n_vehicles: int = 10) -> None:
         """
         Populate a road with several vehicles on the highway and on the merging lane
 
